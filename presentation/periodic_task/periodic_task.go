@@ -15,14 +15,51 @@ type BadRequestResponse struct {
 	Desc   string `json:"desc"`
 }
 
+type RequestedPeriodicTask struct {
+	Period          string
+	InvocationPoint domain.InvocationPoint
+	Timezone        string
+}
+
 func (h PeriodicTaskHandler) MatchTimestamps(w http.ResponseWriter, r *http.Request) {
 
 	period := r.URL.Query().Get("period")
 	timeZone := r.URL.Query().Get("tz")
-	startingPoint := r.URL.Query().Get("pt1")
-	endingPoint := r.URL.Query().Get("pt2")
+	startingPoint := r.URL.Query().Get("t1")
+	endingPoint := r.URL.Query().Get("t2")
 
-	if period == "" || timeZone == "" || startingPoint == "" || endingPoint == "" {
+	if period == "" || timeZone == "" || startingPoint == "" || endingPoint == "" || len(startingPoint) != 16 || len(endingPoint) != 16 {
+		w.WriteHeader(http.StatusBadRequest)
+		badRequestResponse, _ := json.Marshal(BadRequestResponse{
+			Status: "error",
+			Desc:   "invalid parameters",
+		})
+		w.Write(badRequestResponse)
+		return
+	}
+
+	requestedPeriodicTask := RequestedPeriodicTask{
+		Period: period,
+		InvocationPoint: domain.InvocationPoint{
+			StartingTimestamp: startingPoint,
+			EndingTimestamp:   endingPoint,
+		},
+		Timezone: timeZone,
+	}
+
+	timestamps, err := h.pts.GetPeriodicTimestamps(domain.PeriodicTask(requestedPeriodicTask))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		badRequestResponse, _ := json.Marshal(BadRequestResponse{
+			Status: "error",
+			Desc:   err.Error(),
+		})
+		w.Write(badRequestResponse)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	timestampsResp, err := json.Marshal(timestamps)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		badRequestResponse, _ := json.Marshal(BadRequestResponse{
 			Status: "error",
@@ -31,20 +68,7 @@ func (h PeriodicTaskHandler) MatchTimestamps(w http.ResponseWriter, r *http.Requ
 		w.Write(badRequestResponse)
 		return
 	}
-
-	err := h.pts.MatchTimestamps(period, timeZone, startingPoint, endingPoint)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		badRequestResponse, _ := json.Marshal(BadRequestResponse{
-			Status: "error",
-			Desc:   "failed to match timestamps",
-		})
-		w.Write(badRequestResponse)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	return
+	w.Write(timestampsResp)
 }
 
 func NewPeriodicTaskHandler(pts domain.PeriodicTaskService) PeriodicTaskHandler {

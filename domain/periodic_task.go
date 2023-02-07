@@ -12,5 +12,5 @@ type InvocationPoint struct {
 }
 
 type PeriodicTaskService interface {
-	MatchTimestamps(period, timeZone, startingPoint, endingPoint string) error
+	GetPeriodicTimestamps(pt PeriodicTask) ([]string, error)
 }
