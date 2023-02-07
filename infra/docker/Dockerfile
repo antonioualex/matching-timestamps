@@ -9,5 +9,5 @@ RUN go mod download
 
 COPY . ./
 
-RUN go build -o /midas ./cmd/main.go
+RUN go build -o /matching-timestamps ./cmd/main.go
 
