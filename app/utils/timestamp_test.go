@@ -26,7 +26,7 @@ func TestGetTimestamps_FAIL(t *testing.T) {
 	locatedEndingPointTimestamp := time.Date(2009, 1, 1, 7, 0, 0, 0, time.UTC)
 
 	_, err := GetTimestamps(period, locatedStartingPointTimestamp, locatedEndingPointTimestamp)
-	if err != nil {
+	if err == nil {
 		t.Error(err)
 	}
 
