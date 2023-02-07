@@ -7,7 +7,7 @@ func CreateRoutes(pts domain.PeriodicTaskService) map[string]domain.RouteDef {
 	return map[string]domain.RouteDef{
 		"/ptlist": {
 			Methods:     []string{"GET"},
-			HandlerFunc: ph.PeriodicTaskList,
+			HandlerFunc: ph.MatchTimestamps,
 		},
 	}
 

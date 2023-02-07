@@ -15,7 +15,7 @@ type BadRequestResponse struct {
 	Desc   string `json:"desc"`
 }
 
-func (h PeriodicTaskHandler) PeriodicTaskList(w http.ResponseWriter, r *http.Request) {
+func (h PeriodicTaskHandler) MatchTimestamps(w http.ResponseWriter, r *http.Request) {
 
 	period := r.URL.Query().Get("period")
 	timeZone := r.URL.Query().Get("tz")
@@ -27,6 +27,17 @@ func (h PeriodicTaskHandler) PeriodicTaskList(w http.ResponseWriter, r *http.Req
 		badRequestResponse, _ := json.Marshal(BadRequestResponse{
 			Status: "error",
 			Desc:   "missing parameters",
+		})
+		w.Write(badRequestResponse)
+		return
+	}
+
+	err := h.pts.MatchTimestamps(period, timeZone, startingPoint, endingPoint)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		badRequestResponse, _ := json.Marshal(BadRequestResponse{
+			Status: "error",
+			Desc:   "failed to match timestamps",
 		})
 		w.Write(badRequestResponse)
 		return
